@@ -10,6 +10,16 @@ from app.routers import applications
 # Create all tables on startup (SQLite, no migrations needed for dev)
 Base.metadata.create_all(bind=engine)
 
+# Auto-seed demo data on startup (safe: skips if data already exists)
+# Needed on platforms with ephemeral filesystems (Render free tier)
+try:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+    from seed import seed
+    seed()
+except Exception:
+    pass  # never block startup due to seed errors
+
 app = FastAPI(
     title="Job Tracker API",
     description="Backend for the Job Application Tracker portfolio project.",
