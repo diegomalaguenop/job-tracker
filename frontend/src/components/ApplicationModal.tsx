@@ -75,7 +75,8 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    // data-testid lets Playwright target the modal unambiguously
+    <div data-testid="app-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
@@ -90,12 +91,13 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
           </button>
         </div>
 
-        {/* Form */}
+        {/* Form — labels connected to inputs via htmlFor/id for accessibility + Playwright */}
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Company *</label>
+              <label htmlFor="field-company" className="block text-sm font-medium text-gray-700">Company *</label>
               <input
+                id="field-company"
                 required
                 value={form.company}
                 onChange={e => set('company', e.target.value)}
@@ -103,8 +105,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Role *</label>
+              <label htmlFor="field-role" className="block text-sm font-medium text-gray-700">Role *</label>
               <input
+                id="field-role"
                 required
                 value={form.role}
                 onChange={e => set('role', e.target.value)}
@@ -115,8 +118,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Location *</label>
+              <label htmlFor="field-location" className="block text-sm font-medium text-gray-700">Location *</label>
               <input
+                id="field-location"
                 required
                 placeholder="Toronto, ON"
                 value={form.location}
@@ -125,8 +129,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label htmlFor="field-status" className="block text-sm font-medium text-gray-700">Status</label>
               <select
+                id="field-status"
                 value={form.status}
                 onChange={e => set('status', e.target.value as ApplicationStatus)}
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -142,8 +147,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date Applied *</label>
+              <label htmlFor="field-date" className="block text-sm font-medium text-gray-700">Date Applied *</label>
               <input
+                id="field-date"
                 required
                 type="date"
                 value={form.date_applied}
@@ -152,8 +158,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Job URL</label>
+              <label htmlFor="field-url" className="block text-sm font-medium text-gray-700">Job URL</label>
               <input
+                id="field-url"
                 type="url"
                 value={form.url ?? ''}
                 onChange={e => set('url', e.target.value)}
@@ -164,8 +171,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Salary Min (CAD)</label>
+              <label htmlFor="field-salary-min" className="block text-sm font-medium text-gray-700">Salary Min (CAD)</label>
               <input
+                id="field-salary-min"
                 type="number"
                 min={0}
                 value={form.salary_min ?? ''}
@@ -174,8 +182,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Salary Max (CAD)</label>
+              <label htmlFor="field-salary-max" className="block text-sm font-medium text-gray-700">Salary Max (CAD)</label>
               <input
+                id="field-salary-max"
                 type="number"
                 min={0}
                 value={form.salary_max ?? ''}
@@ -186,8 +195,9 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
+            <label htmlFor="field-notes" className="block text-sm font-medium text-gray-700">Notes</label>
             <textarea
+              id="field-notes"
               rows={3}
               value={form.notes ?? ''}
               onChange={e => set('notes', e.target.value)}
@@ -207,6 +217,7 @@ export default function ApplicationModal({ open, initial, onSave, onClose }: Pro
               Cancel
             </button>
             <button
+              data-testid="modal-submit"
               type="submit"
               disabled={saving}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
