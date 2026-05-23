@@ -3,12 +3,14 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   createApplication,
   deleteApplication,
+  getStats,
   listApplications,
   updateApplication,
 } from '../api/applications'
 import type {
   Application,
   ApplicationCreate,
+  ApplicationStats,
   ApplicationStatus,
 } from '../api/types'
 
@@ -17,8 +19,17 @@ interface Filters {
   search?: string
 }
 
+const emptyStats: ApplicationStats = {
+  total: 0,
+  by_status: { applied: 0, screening: 0, interview: 0, offer: 0, rejected: 0 },
+  response_rate: 0,
+  active_pipeline: 0,
+  offers: 0,
+}
+
 export function useApplications() {
   const [applications, setApplications] = useState<Application[]>([])
+  const [stats, setStats] = useState<ApplicationStats>(emptyStats)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<Filters>({})
@@ -27,8 +38,13 @@ export function useApplications() {
     setLoading(true)
     setError(null)
     try {
-      const data = await listApplications(filters)
+      // Fetch both in parallel — stats always reflects full dataset, not filtered view
+      const [data, statsData] = await Promise.all([
+        listApplications(filters),
+        getStats(),
+      ])
       setApplications(data)
+      setStats(statsData)
     } catch {
       setError('Failed to load applications.')
     } finally {
@@ -53,5 +69,5 @@ export function useApplications() {
     await load()
   }
 
-  return { applications, loading, error, filters, setFilters, create, update, remove }
+  return { applications, stats, loading, error, filters, setFilters, create, update, remove }
 }

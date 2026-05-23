@@ -1,22 +1,21 @@
 // src/App.tsx
 import { useState } from 'react'
-import { deleteApplication } from './api/applications'
 import type { Application, ApplicationCreate, ApplicationStatus } from './api/types'
 import ApplicationModal from './components/ApplicationModal'
 import ApplicationTable from './components/ApplicationTable'
-import StatusBadge from './components/StatusBadge'
+import StatsBar from './components/StatsBar'
 import { useApplications } from './hooks/useApplications'
 
-const STATUSES: ApplicationStatus[] = [
-  'applied',
-  'screening',
-  'interview',
-  'offer',
-  'rejected',
+const STATUSES: { value: ApplicationStatus; label: string }[] = [
+  { value: 'applied', label: 'Applied' },
+  { value: 'screening', label: 'Screening' },
+  { value: 'interview', label: 'Interview' },
+  { value: 'offer', label: 'Offer' },
+  { value: 'rejected', label: 'Rejected' },
 ]
 
 export default function App() {
-  const { applications, loading, error, filters, setFilters, create, update, remove } =
+  const { applications, stats, loading, error, filters, setFilters, create, update, remove } =
     useApplications()
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -41,15 +40,25 @@ export default function App() {
     }
   }
 
-  const handleSearch = (e: React.FormEvent<HTMLInputElement>) => {
-    const val = e.currentTarget.value
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
     setSearch(val)
     setFilters(f => ({ ...f, search: val || undefined }))
   }
 
-  const handleStatusFilter = (status: ApplicationStatus | '') => {
-    setFilters(f => ({ ...f, status: status || undefined }))
+  const toggleStatus = (status: ApplicationStatus) => {
+    setFilters(f => ({
+      ...f,
+      status: f.status === status ? undefined : status,
+    }))
   }
+
+  const clearFilters = () => {
+    setFilters({})
+    setSearch('')
+  }
+
+  const hasFilters = filters.status || filters.search
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,37 +79,54 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+        {/* Stats dashboard */}
+        <StatsBar stats={stats} />
+
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
           <input
             type="search"
             placeholder="Search company or role…"
             value={search}
-            onInput={handleSearch}
+            onChange={handleSearch}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-56 focus:border-blue-500 focus:outline-none"
           />
-          <select
-            value={filters.status ?? ''}
-            onChange={e => handleStatusFilter(e.target.value as ApplicationStatus | '')}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">All statuses</option>
-            {STATUSES.map(s => (
-              <option key={s} value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </option>
+
+          {/* Status chips */}
+          <div className="flex gap-2">
+            {STATUSES.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => toggleStatus(value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors border ${
+                  filters.status === value
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                {label}
+                {stats.by_status[value] > 0 && (
+                  <span className={`ml-1.5 ${filters.status === value ? 'text-blue-200' : 'text-gray-400'}`}>
+                    {stats.by_status[value]}
+                  </span>
+                )}
+              </button>
             ))}
-          </select>
-          {(filters.status || filters.search) && (
+          </div>
+
+          {/* Clear + count */}
+          {hasFilters && (
             <button
-              onClick={() => { setFilters({}); setSearch('') }}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
+              onClick={clearFilters}
+              className="text-sm text-gray-400 hover:text-gray-600 underline"
             >
-              Clear filters
+              Clear
             </button>
           )}
-          <span className="ml-auto text-sm text-gray-500">
+          <span className="ml-auto text-sm text-gray-400">
             {applications.length} application{applications.length !== 1 ? 's' : ''}
+            {hasFilters ? ' (filtered)' : ''}
           </span>
         </div>
 
