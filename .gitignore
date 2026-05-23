@@ -26,6 +26,9 @@ test-results/
 playwright-report/
 blob-report/
 
+# Automation output (regenerated on each run)
+automation/suggestions.json
+
 # OS
 .DS_Store
 Thumbs.db
