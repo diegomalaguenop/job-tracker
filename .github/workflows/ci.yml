@@ -29,7 +29,7 @@ jobs:
 
       - name: Start FastAPI server
         working-directory: backend
-        run: uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+        run: uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/fastapi.log 2>&1 &
 
       # ── Node / Frontend ─────────────────────────────────────────────────────
       - name: Set up Node 20
@@ -43,7 +43,7 @@ jobs:
 
       - name: Start Vite dev server
         working-directory: frontend
-        run: npm run dev &
+        run: npm run dev > /tmp/vite.log 2>&1 &
 
       # ── Playwright ──────────────────────────────────────────────────────────
       - name: Install Playwright dependencies
@@ -52,18 +52,40 @@ jobs:
           npm install
           npx playwright install chromium --with-deps
 
-      # ── Wait for both servers ───────────────────────────────────────────────
+      # ── Wait for servers (with diagnostic output on failure) ─────────────
       - name: Wait for FastAPI (localhost:8000)
         run: |
           echo "Waiting for FastAPI..."
-          timeout 30 bash -c 'until curl -sf http://127.0.0.1:8000/health > /dev/null; do sleep 1; done'
-          echo "FastAPI ready ✓"
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
+              echo "FastAPI ready after ${i}s ✓"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "ERROR: FastAPI did not start within 60s"
+              echo "--- FastAPI log ---"
+              cat /tmp/fastapi.log || true
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Wait for Vite (localhost:5173)
         run: |
           echo "Waiting for Vite..."
-          timeout 30 bash -c 'until curl -sf http://127.0.0.1:5173 > /dev/null; do sleep 1; done'
-          echo "Vite ready ✓"
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5173 > /dev/null 2>&1; then
+              echo "Vite ready after ${i}s ✓"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "ERROR: Vite did not start within 60s"
+              echo "--- Vite log ---"
+              cat /tmp/vite.log || true
+              exit 1
+            fi
+            sleep 1
+          done
 
       # ── Tests ───────────────────────────────────────────────────────────────
       - name: Run Playwright tests
@@ -73,7 +95,7 @@ jobs:
       # ── Artifacts ───────────────────────────────────────────────────────────
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
-        if: always() # upload even if tests fail
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
