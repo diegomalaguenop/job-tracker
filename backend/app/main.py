@@ -1,4 +1,6 @@
 # backend/app/main.py
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,9 +16,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# CORS_ORIGINS env var allows multiple origins separated by comma.
+# Defaults to localhost dev server if not set.
+_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
